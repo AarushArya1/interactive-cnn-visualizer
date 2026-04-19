@@ -80,8 +80,13 @@ def generate_gradcam(model, image_tensor, class_idx=None):
 
     # Important error correction: need this condition, since if the heatmap is flat, heatmap_max = heatmap_min and therefore, will be dividing by 0
     
-    heatmap_np = (heatmap_np - heatmap_min) / (heatmap_max - heatmap_min)
-    
+    if (heatmap_max - heatmap_min > 0):
+        heatmap_np = (heatmap_np - heatmap_min) / (heatmap_max - heatmap_min)
+    else:
+        heatmap_np = np.zeros_like(heatmap_np)
+
+
+
 
     return heatmap_np
 
@@ -98,6 +103,9 @@ def overlay_heatmap_on_image(original_image, heatmap, a = 0.45):
 
     # Learned this a bit too late: CV2 uses a different color channel order than Streamlit
     # So for the actual visual, we need to convert to RGB
+
+    heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+
 
     
     final_overlaid_heatmap = cv2.addWeighted(image_np, 1 - a, colored_heatmap, a, 0)
