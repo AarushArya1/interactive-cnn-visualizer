@@ -107,7 +107,47 @@ def overlay_heatmap_on_image(original_image, heatmap, a = 0.45):
 
     return final_overlaid_heatmap
 
-# TESTING: Coming soon
+
+
+
+# TESTING: UNCOMMENT CODE AND RUN THIS FILE DIRECTLY
+# Use image in examples or own path to image
+# Also requires a working model: see model_ResNet50.py
+# This code will save the heatmap overlay to outputs/gradcam_test.jpg
+
+if __name__ == "__main__":
+    
+    import os
+    from PIL import Image
+    from model_ResNet50 import load_model, load_labels, preprocess_image, predict
+ 
+    test_image_path = "examples/test.jpg" #REPLACE
+ 
+    if not os.path.exists(test_image_path):
+        print("We couldn't find a test image at that path.")
+    else:
+        model = load_model()
+        labels = load_labels()
+        image_tensor = preprocess_image(test_image_path)
+ 
+        predictions = predict(model, image_tensor, labels)
+        top_class, top_confidence = predictions[0]
+        print(f"TOP PREDICTION: {top_class} ({top_confidence:.2f}%)")
+
+        # above is basically just prediction code all over again
+        # generating heatmap BELOW
+        heatmap = generate_gradcam(model, image_tensor)
+ 
+        original_image = Image.open(test_image_path).convert("RGB")
+        overlaid = overlay_heatmap_on_image(original_image, heatmap)
+ 
+        os.makedirs("outputs", exist_ok=True)
+        output_path = "outputs/gradcam_test.jpg"
+        Image.fromarray(overlaid).save(output_path)
+    
+        # NOW THE IMAGE IS SUCCESSFULLY SAVED TO THE OUTPUT PATH
+
+
 
 
 
