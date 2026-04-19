@@ -80,7 +80,7 @@ def predict(model, image_tensor, labels, top_k=5):
     # above: top_k = 5 means we will return a list of the top 5 classes the model thinks the image is
 
     with torch.no_grad(): #NOTE: RIGHT NOW WE ARE ONLY PREDICTING, SO WE DON'T NEED TO TRACK THE GRADIENTS
-        #NOTE: LATER ON, when Gradients are needed for Grad-CAM, need to remove torch.no_grad
+        
         logits = model(image_tensor)
         # logits are the resulting scores for every single class (not a probability yet)
         probabilities = torch.softmax(logits, dim = 1)
@@ -103,28 +103,31 @@ def predict(model, image_tensor, labels, top_k=5):
         return results
     
 
+# NOTE: TEST MODEL PREDICTION, UNCOMMENT 
+
 #below is a way to test the model prediction. by running the file directly
 # I am using a test image test.jpg of a red truck that I have dragged into the example folder
 # If anyone wants to use this testing feature, feel free to change the path
 
-if __name__ == "__main__":
+
+# if __name__ == "__main__":
    
-    print("Time to load the model")
-    model = load_model()
-    labels = load_labels_object()
+#     print("Time to load the model")
+#     model = load_model()
+#     labels = load_labels_object()
  
-    test_image_path = "examples/test.jpg"
-    if os.path.exists(test_image_path):
-        print(f"PREDICTING {test_image_path}...\n")
-        test_image_tensor = preprocess_image(test_image_path)
-        predictions = predict(model, test_image_tensor, labels)
-        #note to remember: predict returns the formatted array of [predicted_class_name, predicted_probability_value]
+#     test_image_path = "examples/test.jpg"
+#     if os.path.exists(test_image_path):
+        
+#         test_image_tensor = preprocess_image(test_image_path)
+#         predictions = predict(model, test_image_tensor, labels)
+#         #note to remember: predict returns the formatted array of [predicted_class_name, predicted_probability_value]
  
-        print("TOP 5 PREDICTIONS BELOW:")
-        for rank, (class_name, confidence) in enumerate(predictions, start=1):
-            print(f"  {rank}. {class_name:<30} {confidence:.2f}%")
-    else:
-        print(f"We couldn't find a test image at the path'{test_image_path}'.")
+#         print("TOP 5 PREDICTIONS BELOW:")
+#         for rank, (class_name, confidence) in enumerate(predictions, start=1):
+#             print(f"  {rank}. {class_name:<30} {confidence:.2f}%")
+#     else:
+#         print(f"We couldn't find a test image at the path'{test_image_path}'.")
 
 #test with the fire truck image: pretty good!
 # TOP 5 PREDICTIONS BELOW:
@@ -134,7 +137,6 @@ if __name__ == "__main__":
 # 4. snowplow                       1.62%
 # 5. garbage truck                  1.23%#
 
-# working on the above testing code was a good idea I think, since I can use the code later on in other files for the actual project
 
        
                           
