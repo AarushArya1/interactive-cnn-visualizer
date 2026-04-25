@@ -1,0 +1,7 @@
+
+Expected Label: Dog
+
+Predicted Label: Teddy Bear
+
+According to the Grad-CAM heatmap in the file "super_why_woofster_puppy_gradcam_result_2026-04-25_00:20:34.jpg": 
+the model focuses highly on the nose/mouth area of the puppy, and upon looking closely, it seems that possibly a nose/mouth shape of the puppy resembles that of a teddy bear

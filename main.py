@@ -18,7 +18,9 @@ from gradcam import generate_gradcam, overlay_heatmap_on_image
 #   2. Run the script with an image path:
 #        python main.py --image examples/test.jpg
 #           or python3 on macOS/linux
-#           use your own image path, or try something in the examples folder of this project!
+#           use your own image path, or add something (or try something existing) to the examples folder of this project!
+
+# ADD ANY IMAGES YOU WANT INTO EXAMPLES
 #
 #   Optional: you can also specify how many predictions to show (default is 5):
 #        python main.py --image examples/[file_name].jpg --top_k 3 
