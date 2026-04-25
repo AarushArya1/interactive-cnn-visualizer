@@ -23,7 +23,7 @@ LABELS_URL = "https://raw.githubusercontent.com/anishathalye/imagenet-simple-lab
 # This is where I will store the labels locally
 LABELS_PATH = "cnn_vis_imagenet_labels.json" #
 
-def load_labels_object(): #goal here is to load the labels from the file as a python object, so it can be used in the future
+def load_labels(): #goal here is to load the labels from the file as a python object, so it can be used in the future
     
     
     with open(LABELS_PATH, "r") as f:
@@ -114,7 +114,7 @@ def predict(model, image_tensor, labels, top_k=5):
    
 #     print("Time to load the model")
 #     model = load_model()
-#     labels = load_labels_object()
+#     labels = load_labels()
  
 #     test_image_path = "examples/test.jpg"
 #     if os.path.exists(test_image_path):

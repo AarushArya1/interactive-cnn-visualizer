@@ -32,16 +32,12 @@ See resulting side-by-side heatmaps: left is for the image without any noise, ri
 
 - <i>THIS SECTION IS TO BE COMPLETED!<i>
 
-# Explainable.
-
-Just like how AI should be, this project was completed with a goal to be fully explainable. See comments on every file for how each line of code works or why a particular feature or tool was chosen.
 
 # Want to learn more? 
 
-See background.md and (for research references) references.md 
-Model architecture: ResNet-50. See references.md 
-
-Future plans to expand this platform: ideas can include different model architectures, different accuracy levels, etc... Contact me at []
+- See background.md and (for research references) references.md 
+- Model architecture: ResNet-50. See references.md 
+- Future plans to expand this platform: ideas can include different model architectures, different accuracy levels, etc... Contact me at aarusharya@berkeley.edu
 
 
 
