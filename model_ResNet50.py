@@ -66,9 +66,15 @@ def get_transform_object():
 # applying the get transform method to the image, this part 
 # was pretty intuitive for me
 def preprocess_image(image_source):
-    image = Image.open(image_source).convert("RGB")
-    # the .convert("RGB") was something I was initially missing, it is important
-    # since it handles cases like greyscale images and forces the image to the 3 RGB channels
+
+    # Update: not until finishing most of main.py that I realized that I need to first check if the image_source being passed in from methods in main.py is already a PIL image. 
+    if isinstance(image_source, Image.Image):
+        image = image_source.convert("RGB")
+    else:
+        image = Image.open(image_source).convert("RGB")
+
+    
+    
 
     transform = get_transform_object()
     tensor = transform(image)

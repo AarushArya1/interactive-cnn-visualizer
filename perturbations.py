@@ -25,10 +25,10 @@ def add_gaussian_noise(image, strength = 25):
     # float32 so we can add decimal noise values easily
     noise = np.random.normal(loc = 0, scale = strength, size = image_np.shape)
     noisy_image = image_np + noise
-    noisy = np.clip(noisy, 0, 255).astype(np.uint8)
+    noisy_image = np.clip(noisy_image, 0, 255).astype(np.uint8)
 
     # returns: A new PIL image with the noise applied
-    return Image.fromarray(noisy)
+    return Image.fromarray(noisy_image)
 
 # For the future
 def add_another_pertubation(image, another_parameter):

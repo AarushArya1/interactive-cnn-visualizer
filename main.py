@@ -5,6 +5,7 @@ from PIL import Image
  
 from model_ResNet50 import load_model, load_labels, preprocess_image, predict
 from gradcam import generate_gradcam, overlay_heatmap_on_image
+from perturbations import add_gaussian_noise
  
 # HOW TO RUN (see bottom of instructions for details on where the OUTPUT HEATMAPS are stored)
 #
@@ -12,6 +13,7 @@ from gradcam import generate_gradcam, overlay_heatmap_on_image
 #
 #   2. Basic run (no perturbation):
 #        python main.py --image examples/test.jpg
+#           * use an image already in examples/, add an image to examples/, or use a path to any other image
 #
 #   3. Run WITH Gaussian noise:
 #        python main.py --image examples/test.jpg --noise
@@ -36,8 +38,8 @@ from gradcam import generate_gradcam, overlay_heatmap_on_image
 #       SIDE_BY_SIDE HEATMAP COMPARISON saved to outputs_perturbations/
 #       Named like: outputs_perturbations/filename_gaussian[strengthlevel]_comparison_data_time.jpg
 #           ex. outputs_perturbations/test_gaussian25_comparison_2026-04-24_11:19:52.jpg
-#       LEFT PANEL  = original image heatmap + predictions
-#       RIGHT PANEL = noisy image heatmap + predictions
+#       LEFT PANEL  = original image heatmap 
+#       RIGHT PANEL = noisy image heatmap 
 
 
 
@@ -48,7 +50,7 @@ from gradcam import generate_gradcam, overlay_heatmap_on_image
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Basic version of CNN Visualizer. Upload path to the input image, see top 5 model predictions, then see the visual Grad-CAM heatmap output for that image."
+        description="Basic version of CNN Visualizer. Upload path to the input image, see top 5 model predictions, then see the visual Grad-CAM heatmap output for that image, with optional perturbation comparison (for now, Gaussian Noise)"
     )
     parser.add_argument(
         "--image",
@@ -63,54 +65,69 @@ def parse_args():
         default=5,
         help="How many predictions would you like to display? (Default is 5)"
     )
+
+    # New first perturbation argument:
+    parser.add_argument(
+        "--noise",
+        action="store_true",
+        help="Apply Gaussian Noise to your selected image, and generate a side-by-side comparison heatmap!"
+    )
+
+    # The following manipulates the strength of the Gaussian Noise. For more information, see perturbations.py 
+    parser.add_argument(
+        "--noise_strength",
+        type=int,
+        default=25,
+        help="Strength of noise (default: 25, range: 5-100)"
+    )
     return parser.parse_args()
  
  
-def make_output_filename(image_path):
+def make_output_filename(image_path, output_dir, suffix="gradcam_result"): # suffix parameter is different when noise is applied
    
-
-    # Instead of saving the image to a randomly named file in the outputs folder, it would be better
-    # to save the image according to how the image_path was named
-    # example: if the image was named dog.jpg, the output should be dog_gradcam.jpg
+    # code for custom output path
+    # Build a standard output filename like examples/dog.jpg -> outputs/dog_gradcam_result_2026-04-24_11:19:52.jpg
+    # Modified due to the addition of perturbations
+    
     base_name = os.path.basename(image_path)
     base_of_imagepath = os.path.splitext(base_name)[0] # if basename is dog.jpg, baseofimagepath will be "dog"
-
-
-    # Was curious and wanted to make the outputs folder a more clear record for when tests were run.
-    # Therefore, I decided to use Python's datetime module, which gives the current date and time of testing
+    
+    # I decided to use Python's datetime module, which gives the current date and time of testing
     # trying to format the current date and time into the output filename as well
 
     time_of_testing = datetime.now()
     timestamp = time_of_testing.strftime("%Y-%m-%d_%H:%M:%S")
 
-    output_filename = os.path.join("outputs", f"{base_of_imagepath}_gradcam_result_{timestamp}.jpg")
-    # example output filename: outputs/dog_gradcam_result_2026-04-24_11:19:52.jpg
-
-
+    output_filename = os.path.join(output_dir, f"{base_of_imagepath}_{suffix}_{timestamp}.jpg")
     return output_filename 
- 
+
  
 def print_predictions(predictions):
     print("\nTop Predictions by ResNet50 Model:")
     for rank, (class_name, confidence) in enumerate(predictions, start=1):
         print(f"  {rank}. {class_name:<30} {confidence:.2f}%")
+
+# The following method, create_side_by_side_heatmaps, creates side by side heatmaps when a perturbation is applied. 
+#       LEFT PANEL  = original image heatmap (provided image with no noise applied)
+#       RIGHT PANEL = noisy image heatmap (provided image with the requested noise applied)
+def create_side_by_side_heatmaps(left_image, right_image, divider_width = 4):
+    # left_image and right_image are the respective PIL heatmap images. 
+    # divider_width is the width of the vertical divider (in pixels) between the images. Change this width to your desire.
+
+    # This method returns a single PIL Image with left and right panels joined horizontally.
+    total_heatmap_width = left_image.width + divider_width + right_image.width
+    total_heatmap_height = max(left_image.height, right_image.height)
+    combined = Image.new("RGB", (total_heatmap_width, total_heatmap_height), color=(200, 200, 200))
+    combined.paste(left_image, (0, 0))
+    combined.paste(right_image, (left_image.width + divider_width, 0))
  
-def main():
-    args = parse_args()
- 
-    # Validate image path
-    if not os.path.exists(args.image):
-        print(f"We couldn't find an image at '{args.image}', please try again with a correct image")
-        return
- 
-    
-    os.makedirs("outputs", exist_ok=True) # in case the output folder doesn't exist (not sure why it wouldn't)
- 
-    print(f"\nThe image you have chosen is:  {args.image}")
- 
+    return combined
+
+def run_no_noise(args, model, labels):
+
     # everything below this point is very similar to the testing code in model_ResNet50.py and gradcam.py
-    model = load_model()
-    labels = load_labels()
+
+    os.makedirs("outputs", exist_ok=True) # in case the output folder doesn't exist
     image_tensor = preprocess_image(args.image)
     predictions = predict(model, image_tensor, labels, top_k=args.top_k)
     print_predictions(predictions)
@@ -120,11 +137,62 @@ def main():
     overlaid = overlay_heatmap_on_image(original_image, heatmap)
  
     
-    output_path = make_output_filename(args.image)
+    output_path = make_output_filename(args.image, "outputs")
     Image.fromarray(overlaid).save(output_path)
     print(f"Congrats, your heatmap has successfully been saved to: {output_path} Check it out in the outputs folder, and stay tuned for what is to come with this project!\n")
 
+
+def run_with_noise(args, model, labels):
+
+    os.makedirs("outputs_perturbations", exist_ok=True)
+    original_image = Image.open(args.image).convert("RGB")
+    # adding Gaussian Noise
+    noisy_image = add_gaussian_noise(original_image, strength=args.noise_strength)
+
+    print("\n ------ ORIGINAL IMAGE PREDICTIONS (NO NOISE APPLIED) ---------------------")
+    original_tensor = preprocess_image(args.image)
+    original_predictions = predict(model, original_tensor, labels, top_k=args.top_k)
+    print_predictions(original_predictions)
+
+    original_heatmap = generate_gradcam(model, original_tensor)
+    original_heatmap_overlaid = overlay_heatmap_on_image(original_image, original_heatmap)
+
+    print("\n ------ WITH APPLIED GAUSSIAN NOISE OF STRENGTH = {} ---------------------".format(args.noise_strength))
+    noisy_tensor = preprocess_image(noisy_image)
+    noisy_predictions = predict(model, noisy_tensor, labels, top_k=args.top_k)
+    print_predictions(noisy_predictions)
+    noisy_heatmap = generate_gradcam(model, noisy_tensor)
+    noisy_heatmap_overlaid = overlay_heatmap_on_image(noisy_image, noisy_heatmap)
+
+    # call method create_side_by_side_heatmaps
+    left  = Image.fromarray(original_heatmap_overlaid)
+    right = Image.fromarray(noisy_heatmap_overlaid)
+    side_by_side = create_side_by_side_heatmaps(left, right)
+
+    # Creating the output path for noise
+    suffix_for_path = f"gaussian{args.noise_strength}_comparison"
+    output_path = make_output_filename(args.image, "outputs_perturbations", suffix=suffix_for_path)
+    side_by_side.save(output_path) 
+
+    print(f"Congrats, your side-by-side heatmaps have successfully been saved to: {output_path} Check it out in the outputs folder, and stay tuned for what is to come with this project!\n")
+    
+def main():
+    args = parse_args()
  
+    if not os.path.exists(args.image):
+        print(f"We couldn't find an image at '{args.image}', please try again with a correct image")
+        return
+ 
+    print(f"\nImage: {args.image}")
+    model = load_model()
+    labels = load_labels()
+ 
+    if args.noise:
+        run_with_noise(args, model, labels)
+    else:
+        run_no_noise(args, model, labels)
+
+
  
 if __name__ == "__main__":
     main()
