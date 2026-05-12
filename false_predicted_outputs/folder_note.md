@@ -1,5 +1,5 @@
 
-# Contained stored cases (heatmaps images, correct labels, predicted labels) of false predictions, when there is no noise applied.
+# Contained stored cases (heatmaps images, correct labels, predicted labels) of false predictions
 
 
 Also contains explanations.

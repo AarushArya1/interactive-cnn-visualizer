@@ -6,6 +6,8 @@ from PIL import Image
 from model_ResNet50 import load_model, load_labels, preprocess_image, predict
 from gradcam import generate_gradcam, overlay_heatmap_on_image
 from perturbations import add_gaussian_noise
+from perturbations import add_rotation
+from perturbations import add_occlusion
  
 # HOW TO RUN (see bottom of instructions for details on where the OUTPUT HEATMAPS are stored)
 #
