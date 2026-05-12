@@ -68,11 +68,11 @@ def parse_args():
         help="How many predictions would you like to display? (Default is 5)"
     )
 
-    # New first perturbation argument:
+    # Argument to add Gaussian Noise to the image:
     parser.add_argument(
         "--noise",
         action="store_true",
-        help="Apply Gaussian Noise to your selected image, and generate a side-by-side comparison heatmap!"
+        help="Apply Gaussian Noise to your selected image, and generate a side-by-side comparison heatmap"
     )
 
     # The following manipulates the strength of the Gaussian Noise. For more information, see perturbations.py 
@@ -82,14 +82,69 @@ def parse_args():
         default=25,
         help="Strength of noise (default: 25, range: 5-100)"
     )
+
+    # Argument to add a rotation to the image:
+
+    parser.add_argument(
+        "--rotation",
+        action="store_true",
+        help="Rotate your selected image, and generate a side-by-side comparison heatmap"
+    )
+
+    # Argument to specify the degrees to rotate the image counter-clockwise. The default rotation is 30 degrees if not otherwise specified.
+    parser.add_argument(
+        "--rotation_angle",
+        type=int,
+        default=30,
+        help="Degrees to rotate the selected image counter-clockwise"
+    )
+
+    # Argument to add a black rectangle to the selected image
+    parser.add_argument(
+        "--occlusion",
+        action="store_true",
+        help="Apply an occlusion (in the form of a black rectangle) to your selected image"
+    )
+
+    # Argument to set the size of the occlusion (black rectangle) in pixels. The default is 64 pixels width and height
+
+    parser.add_argument(
+        "--occlusion_size",
+        type=int,
+        default=64,
+        help="Size of the occlusion box in pixels. Default is 64 pixels."
+    )
+
+    # With the occlusion_x argument, you can set the distance (in pixels) of the left edge of the occlusion rectangle from the left edge of the specified image. If not specified, the occlusion
+    # rectangle will by default by centered. See add_occlusion in perturbations.py for more information
+    parser.add_argument(
+        "--occlusion_x",
+        type=int,
+        default=None,
+        help="Left edge of occlusion box in pixels from the left edge of the image. Default is auto-centered"
+    )
+
+    # With the occlusion_y argument, you can set the distance (in pixels) of the top edge of the occlusion rectangle from the top edge of the specified image. If not specified, the occlusion
+    # rectangle will by default by centered. See add_occlusion in perturbations.py for more information
+    parser.add_argument(
+        "--occlusion_y",
+        type=int,
+        default=None,
+        help="Top edge of occlusion box in pixels from the top edge of the image. Default is auto-centered"
+    )
+
+
+
+    
+
     return parser.parse_args()
  
  
 def make_output_filename(image_path, output_dir, suffix="gradcam_result"): # suffix parameter is different when noise is applied
-   
+    # NOTE: See the build_suffix method
     # code for custom output path
     # Build a standard output filename like examples/dog.jpg -> outputs/dog_gradcam_result_2026-04-24_11:19:52.jpg
-    # Modified due to the addition of perturbations
+    # Modified due to the addition of perturbations. NOTE: See build_suffix method
     
     base_name = os.path.basename(image_path)
     base_of_imagepath = os.path.splitext(base_name)[0] # if basename is dog.jpg, baseofimagepath will be "dog"
@@ -143,13 +198,41 @@ def run_no_noise(args, model, labels):
     Image.fromarray(overlaid).save(output_path)
     print(f"Congrats, your heatmap has successfully been saved to: {output_path} Check it out in the outputs folder, and stay tuned for what is to come with this project!\n")
 
+def build_perturbed_image(image, args):
+    # Apply all requested perturbations/arguments in sequence to the specified image.
+    # Returns a PIL image with all perturbations applied
 
-def run_with_noise(args, model, labels):
+    perturbed_image = image
+    if args.noise:
+        perturbed_image = add_gaussian_noise(perturbed_image, strength = args.noise_strength)
+    if args.rotation:
+        perturbed_image = add_rotation(perturbed_image, angle = args.rotation_angle)
+    if args.occlusion:
+        perturbed_image = add_occlusion(perturbed_image, width = args.occlusion_size, height = args.occlusion_size, x = args.occlusion_x, y = args.occlusion_y)
+    return perturbed_image
+
+# Build the output filename suffix reflecting all perturbations applied
+# An example of such a filename suffix is gaussian25_rotation30_occlusion64x=50y=50_comparison
+def build_suffix(args):
+    # parts is an array of all different noise arguments to add 
+    parts = []
+    if args.noise:
+        parts.append(f"gaussian{args.noise_strength}")
+    if args.rotation:
+        parts.append(f"rotation{args.rotation_angle}")
+    if args.occlusion:
+        parts.append(f"occlusion{args.occlusion_size}x={args.occlusion_x}y={args.occlusion_y}")
+    parts.append("comparison")
+    return "_".join(parts)
+
+
+def run_with_perturbations(args, model, labels):
 
     os.makedirs("outputs_perturbations", exist_ok=True)
     original_image = Image.open(args.image).convert("RGB")
-    # adding Gaussian Noise
-    noisy_image = add_gaussian_noise(original_image, strength=args.noise_strength)
+    # making the perturbed image
+    perturbed_image = build_perturbed_image(original_image, args)
+    
 
     print("\n ------ ORIGINAL IMAGE PREDICTIONS (NO NOISE APPLIED) ---------------------")
     original_tensor = preprocess_image(args.image)
@@ -159,21 +242,21 @@ def run_with_noise(args, model, labels):
     original_heatmap = generate_gradcam(model, original_tensor)
     original_heatmap_overlaid = overlay_heatmap_on_image(original_image, original_heatmap)
 
-    print("\n ------ WITH APPLIED GAUSSIAN NOISE OF STRENGTH = {} ---------------------".format(args.noise_strength))
-    noisy_tensor = preprocess_image(noisy_image)
-    noisy_predictions = predict(model, noisy_tensor, labels, top_k=args.top_k)
-    print_predictions(noisy_predictions)
-    noisy_heatmap = generate_gradcam(model, noisy_tensor)
-    noisy_heatmap_overlaid = overlay_heatmap_on_image(noisy_image, noisy_heatmap)
+    print("\n ------ PREDICTIONS WITH ALL PERTURBATIONS APPLIED = {} ---------------------".format(build_suffix(args)))
+    perturbed_tensor = preprocess_image(perturbed_image)
+    perturbed_predictions = predict(model, perturbed_tensor, labels, top_k=args.top_k)
+    print_predictions(perturbed_predictions)
+    perturbed_heatmap = generate_gradcam(model, perturbed_tensor)
+    perturbed_heatmap_overlaid = overlay_heatmap_on_image(perturbed_image, perturbed_heatmap)
 
     # call method create_side_by_side_heatmaps
     left  = Image.fromarray(original_heatmap_overlaid)
-    right = Image.fromarray(noisy_heatmap_overlaid)
+    right = Image.fromarray(perturbed_heatmap_overlaid)
     side_by_side = create_side_by_side_heatmaps(left, right)
 
     # Creating the output path for noise
-    suffix_for_path = f"gaussian{args.noise_strength}_comparison"
-    output_path = make_output_filename(args.image, "outputs_perturbations", suffix=suffix_for_path)
+    output_path = make_output_filename(args.image, "outputs_perturbations", suffix=build_suffix(args))
+
     side_by_side.save(output_path) 
 
     print(f"Congrats, your side-by-side heatmaps have successfully been saved to: {output_path} Check it out in the outputs folder, and stay tuned for what is to come with this project!\n")
@@ -189,8 +272,8 @@ def main():
     model = load_model()
     labels = load_labels()
  
-    if args.noise:
-        run_with_noise(args, model, labels)
+    if args.noise or args.rotation or args.occlusion:
+        run_with_perturbations(args, model, labels)
     else:
         run_no_noise(args, model, labels)
 

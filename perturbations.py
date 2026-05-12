@@ -45,17 +45,24 @@ def add_rotation(image, angle = 30):
 # after occluding a region, insights can be developed on the importance of that specific region.
 # Feel free to experiment with add_occlusion and different rectangular regions to blur, especially for images belonging to real world applicable datasets
 
-def add_occlusion(image, x = 80, y = 80, width = 64, height = 64):
-    # x represents the left edge of the rectangle to blur out (in pixels from the left edge of the image). this value can be set. if not set, the default value is 80 pixels right of the left edge (which I believe is best after some rigorous testing)
-    # y represents the top edge of the rectangle to blur out (in pixels from the top edge of the image). this value can be set. if not set, the default value is 80 pixels down from the top edge (which I believe is best after some rigorous testing)
+def add_occlusion(image, width=64, height=64, x=None, y=None):
+
+    # x represents the left edge of the rectangle to blur out (in pixels from the left edge of the image). this value can be set. if not set, the default value centers the occlusion rectangle in the middle of the image
+    # y represents the top edge of the rectangle to blur out (in pixels from the top edge of the image). this value can be set. if not set, the default value centers the occlusion rectangle in the middle of the image
     # width is the width of the occlusion rectangle in pixels. default is 64 pixels
     # height is the height of the rectangle in pixels. default is 64 pixels
     # This method returns a new PIL image with the rectangle blacked out
-    
+
     image_np = np.array(image.copy())
+    
+    img_height, img_width = image_np.shape[:2]
+    if x is None:
+        x = (img_width - width) // 2
+    if y is None:
+        y = (img_height - height) // 2
+    
     image_np[y : y + height, x : x + width] = 0
     return Image.fromarray(image_np)
-
 
     
 
