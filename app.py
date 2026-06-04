@@ -4,8 +4,9 @@ import os
 from model_ResNet50 import load_model, load_labels, preprocess_image, predict
 from PIL import Image 
 
-# 5/28: ONLY A BASIC SHELL OF THE ACTUAL UI. ONLY IMAGE SELECTION AND BASIC MODEL PREDICTION IS AVAILABLE SO FAR. 
-# GRAD-CAM AND ALL FEATURES WILL BE LINKED LATER
+from gradcam import generate_gradcam, overlay_heatmap_on_image
+
+
 
 # HOW TO RUN:
 # python -m streamlit run app.py
@@ -31,8 +32,7 @@ labels = get_labels()
 
 st.title("Interactive CNN Visualizer")
 st.markdown(
-    "FULL VERSION COMING SOON! You may use this UI to only upload images and generate predictions. To fully test this project currently, use the terminal based main.py and follow the instructions in the file comments. Later, you will be able to upload an image or choose an example to visualize how "
-    "a pretrained ResNet-50 model makes predictions using Grad-CAM heatmaps. You will also be able to select various perturbations to add to the image, simulating a full ML experiment platform. "
+    "FULL VERSION COMING SOON! You may use this UI to only upload images, to generate predictions, and see the resulting Grad-CAM output. To fully test this project currently, use the terminal based main.py and follow the instructions in the file comments. Later, You will also be able to select various perturbations to add to the image (or analyze our featured example outputs), simulating a full ML experiment platform. "
 )
 st.divider()
 
@@ -84,18 +84,18 @@ else:
 # for now: just display the selected image!
 if selected_image is not None:
     st.divider()
-    st.subheader("Your selected image is displayed before. Now, add perturbations (optional) and press predict. Or, select a different image (or use one of our examples)")
+    st.subheader("YOUR SELECTED IMAGE:")
     st.image(selected_image, use_container_width = False, width = 400) #we want to use our own width for the image, not the entire container width
 
 # Next step (for now) is model prediction
 
 st.divider()
-st.subheader("ResNet50 Model Prediction")
+
 
 # top_k: like in main.py, top_k is the number of predictions to generate
 
 top_k = st.number_input( # this is actually not a text box but instead a slider/widget
-    label = "Enter the amount of top predictions from the model that you would like to display",
+    label = "Enter the amount of top predictions from the model to display. After pressing predict, scroll down to see the resultant heatmap(s) and predictions!",
     min_value = 1,
     max_value = 20,
     value = 5, #default value
@@ -104,26 +104,60 @@ top_k = st.number_input( # this is actually not a text box but instead a slider/
     
 )
 
-if st.button("Predict", type = "primary"):
-    with st.spinner("Model running..."):
+predict_clicked = st.button("Predict", type = "primary")
+
+# now display predictions and grad cam. took me a time to handle edge cases where an image was actually not selected by the user. 
+# but while doing so, i learned a lot from the streamlit api. even adder a spinner. I'll probably work on polishing this UI at the very end of this project
+if predict_clicked:
+    with st.spinner("Model running...Grad-CAM generating..."): # for future: Perturbated Grad-CAM generating...
         image = Image.open(selected_image).convert("RGB")
         image_tensor = preprocess_image(image)
         predictions = predict(model, image_tensor, labels, top_k = int(top_k))
+        heatmap = generate_gradcam(model, image_tensor) # calling grad cam methods
+        overlaid = overlay_heatmap_on_image(image, heatmap)
 
-    st.success("Prediction complete successfully")
+
+    st.divider()
+
+
+
+    # the generated Grad-CAM heatmap is going to split the screen with the original image.
+    # therefore, I am using st.columns to split the page into side by side sections, where the original image will be on the right and the Grad-CAM on the left
+    # the 0.05 parameter adds a spacer column between the split.
+
+    col_original, col_spacer, col_heatmap = st.columns([1, 0.05, 1]) # original image, spacing, heatmap respectively
+
+    with col_original:
+            st.markdown("YOUR ORIGINAL IMAGE")
+            st.image(image, use_container_width=True)
+ 
+    with col_heatmap:
+        st.markdown("GENERATED Grad-CAM HEATMAP")
+        st.image(overlaid, use_container_width=True)
+        st.header("What does the Grad-CAM mean?")
+        st.caption(
+            "Red regions are what most influenced the model's prediction."
+            "Blue regions had the LEAST influence on the model's prediction."
+            "To learn more about how Grad-CAM works, see References or Background from the menu bar" # for future implementation btw 
+        )
+
+    # Predictions
+
+    st.divider()
     st.markdown(f"TOP {top_k} PREDICTIONS:")
     for rank, (class_name, confidence) in enumerate(predictions, start = 1):
         st.markdown(f"**{rank}.** {class_name}")
         st.progress(confidence / 100) # this is a progress bar which is filled to the confidence percentage for that prediction. 
         st.caption(f"{confidence:.2f}%")
 
+    
+
 st.divider()
-st.subheader("In the short future: the Grad-CAM heatmap will be added. Then, the perturbations menu will be added. Then, the analysis/choose example outputs features will be added. This will be a polished app very soon, so stay in touch with this project.")
+st.subheader("In the short future: the perturbations menu will be added. Then, the analysis/choose example outputs features will be added. This will be a polished app very soon, so stay in touch with this project.")
 feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
 
 
-# now display predictions. took me a time to handle edge cases where an image was actually not selected by the user. 
-# but while doing so, i learned a lot from the streamlit api. even adder a spinner. I'll probably work on polishing this UI at the very end of this project
+
 
 
 
@@ -133,10 +167,17 @@ feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
 # grad cam heatmap should be displayed nicely in a box in the middle of the screen (need to figure out streamlit), ABOVE the display of the original selected image. a nice label to seperate these two.
 # instead of select an image, there will be a completely other option (highest layer) to instead view example outputs
 
+# need a download result feature
 
 # add more to the examples menu, standardize this project and the file structure (at the end, this is a later step)
+# and format the "or choose one of our images" and  "choose an example output" to look nice -- like those images are actually there. so its visually appealing. will need to find a way to do this later on.
 
-    
+# oh yeah also should have a menu bar with other options like references, background, etc and need to populate
+
+# SHOULD FEED IN MORE LABELS TO THE MODEL!!!! SO IT CAN DO OTHER, MORE COMPLEX STUFF
+
+ 
+# ONCE all of that is done, can start creating user login/signups and save all generated heatmaps & predictions in the user's local history/database. that itself is another project on its own.
          
 
 
