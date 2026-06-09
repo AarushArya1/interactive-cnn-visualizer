@@ -6,6 +6,8 @@ from PIL import Image
 
 from gradcam import generate_gradcam, overlay_heatmap_on_image
 
+from perturbations import add_gaussian_noise, add_rotation, add_occlusion
+
 
 
 # HOW TO RUN:
@@ -32,7 +34,7 @@ labels = get_labels()
 
 st.title("Interactive CNN Visualizer")
 st.markdown(
-    "FULL VERSION COMING SOON! You may use this UI to only upload images, to generate predictions, and see the resulting Grad-CAM output. To fully test this project currently, use the terminal based main.py and follow the instructions in the file comments. Later, You will also be able to select various perturbations to add to the image (or analyze our featured example outputs), simulating a full ML experiment platform. "
+    " INSTRUCTIONS TO BE INSERTED HERE. "
 )
 st.divider()
 
@@ -84,7 +86,47 @@ else:
 # for now: just display the selected image!
 if selected_image is not None:
     st.divider()
-    st.subheader("YOUR SELECTED IMAGE:")
+    st.subheader("Now, configure the settings of your trial. Use the controls below.")
+
+    # There are now two additional inputs, not just one: the Top_K num predictions input and all the inputs for the perturbations.
+    # Therefore, these controls will sit side by side in two columns.
+    # Perturbation column will be wider since more controls
+
+    topk_column, perturbation_column = st.columns([1, 2])
+
+    with topk_column:
+        st.markdown("Prediction Setting")
+        top_k = st.number_input( # this is actually not a text box but instead a slider/widget
+            label = "Enter the amount of top predictions from the model to display. After pressing predict, scroll down to see the resultant heatmap(s) and predictions!",
+            min_value = 1,
+            max_value = 20,
+            value = 5, #default value
+            step = 1,
+            help = "how many predictions should the model return? From 1 to 20"
+    
+        )
+    
+    with perturbation_column:
+        st.markdown("Apply perturbations. Perturbations reflect how models encounter adversarial data (corrupted images) in the real world.")
+        st.caption("Current options include Gaussian Noise (apply noise of a certain level to each pixel), Rotation (of the image by certain degrees), and Occlusions (a black rectangle of your configuration is added to the image, hiding a certain part of the image). ")
+        st.caption("Check any combination. In backend, stacks in the follow order: noise, rotation, occlusion")
+
+        use_noise = st.checkbox("Gaussian Noise")
+        if use_noise:
+            noise_strength = st.slider(
+                "Strength of Gaussian Noise (higher values lead to greater distortion within each image pixel)",
+                min_value = 5, max_value = 100, value = 25, step = 5,
+                help = "Higher values lead to greater distortion within each image pixel."
+
+            )
+        else:
+            noise_strength = 0
+        
+        use_rotation = st.checkbox("Rotation")
+
+
+
+
     st.image(selected_image, use_container_width = False, width = 400) #we want to use our own width for the image, not the entire container width
 
 # Next step (for now) is model prediction
@@ -94,15 +136,7 @@ st.divider()
 
 # top_k: like in main.py, top_k is the number of predictions to generate
 
-top_k = st.number_input( # this is actually not a text box but instead a slider/widget
-    label = "Enter the amount of top predictions from the model to display. After pressing predict, scroll down to see the resultant heatmap(s) and predictions!",
-    min_value = 1,
-    max_value = 20,
-    value = 5, #default value
-    step = 1,
-    help = "how many predictions should the model return? From 1 to 20"
-    
-)
+
 
 predict_clicked = st.button("Predict", type = "primary")
 
@@ -119,6 +153,14 @@ if predict_clicked:
 
     st.divider()
 
+
+    # NOTE: Initially, I was simply displaying all images below the last (i.e. the grad-cam)
+    # result was right below the display of the picture that the user chose. I am going to change this.
+    # With the addition of the perturbations, the results will be displayed in a 4x4 Grid.
+    # - With top left being chosen image
+    # - top right being original image with all perturbations applied
+    # - bottom left being Grad-CAM for image with no perturbations
+    # - bottom right being Grad-CAM for image with all perturbations.
 
 
     # the generated Grad-CAM heatmap is going to split the screen with the original image.
@@ -138,7 +180,7 @@ if predict_clicked:
         st.caption(
             "Red regions are what most influenced the model's prediction."
             "Blue regions had the LEAST influence on the model's prediction."
-            "To learn more about how Grad-CAM works, see References or Background from the menu bar" # for future implementation btw 
+            "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
         )
 
     # Predictions
@@ -153,7 +195,7 @@ if predict_clicked:
     
 
 st.divider()
-st.subheader("In the short future: the perturbations menu will be added. Then, the analysis/choose example outputs features will be added. This will be a polished app very soon, so stay in touch with this project.")
+st.subheader("MORE FEATURES COMING SOON! Most notably, this will include an option to choose and analyze key example outputs instead of selecting your own image. A download feature will also be added. I also hope to add significantly more labels to feed into the model for a greater and more realistic variety for classification. This will be a polished app very soon, so STAY IN TOUCH with this project.")
 feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
 
 
@@ -172,13 +214,12 @@ feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
 # add more to the examples menu, standardize this project and the file structure (at the end, this is a later step)
 # and format the "or choose one of our images" and  "choose an example output" to look nice -- like those images are actually there. so its visually appealing. will need to find a way to do this later on.
 
-# oh yeah also should have a menu bar with other options like references, background, etc and need to populate
+# oh yeah also should have a menu bar with other options like references, background, about (basically readme.md) and need to populate
 
 # SHOULD FEED IN MORE LABELS TO THE MODEL!!!! SO IT CAN DO OTHER, MORE COMPLEX STUFF
 
- 
-# ONCE all of that is done, can start creating user login/signups and save all generated heatmaps & predictions in the user's local history/database. that itself is another project on its own.
-         
+
+
 
 
     

@@ -2,7 +2,7 @@
 
 This project is currently IN PROGRESS
 
-This is an interactive experiment platform for visualizing and stress-testing CNN predictions with Grad-CAM (Gradient-weighted Class Activation Mapping). Explore trends within a CNN's decision making process. 
+AI Interpretability is getting MORE IMPORTANT THAN EVER. If we can understand how decisions are being made, we can have more trust in AI in a world where AI takes on responsibilities that we once would have deemed as "much too dangerous". Therefore, I created this interactive and EASY-TO-USE experiment platform for visualizing and stress-testing CNN predictions with Grad-CAM (Gradient-weighted Class Activation Mapping). With this, ANYONE can explore trends within a CNN's decision making process. 
 
 The EASIEST way to test and visualize HOW machine learning models make their decisions, and WHY models may be mispredicting, especially when data is noisy
 
@@ -10,11 +10,11 @@ Heatmaps essentially demonstrate which regions of the image are being used the m
 
 # How to use 
 
-1. Upload your own image
+1. Upload your own image (or choose from our pre-selected image catalog)
 
 - Upload image using the image uploader and the correct label. Avoid very low resolution (<224×224) images or images with abstract/unidentifiable subjects. Also avoid noisy images with heavy filters (that's our job)
-- See the resulting detailed heatmap, as well as the model's prediction 
-- If incorrect (correct label != predicted label), see a generated potential explanation 
+- See the resulting detailed Grad-CAM heatmap, as well as the model's prediction 
+- Don't want to upload an image? You can also choose from our catalog of images, brought to you from /examples
 
 2. Add different noise factors, simulating real-world conditions 
 
