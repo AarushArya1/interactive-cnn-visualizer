@@ -44,7 +44,7 @@ st.subheader("Select Image: follow the steps below")
 
 input_method = st.radio(
     label = "Choose an image in one of the following ways: ",
-    options = ["Upload your own image", "Choose an example image"],
+    options = ["Upload your own image", "Choose an example image (use the dropdown)"],
     horizontal = True
 )
 
@@ -108,7 +108,7 @@ if selected_image is not None:
     
     with perturbation_column:
         st.markdown("Apply perturbations. Perturbations reflect how models encounter adversarial data (corrupted images) in the real world.")
-        st.caption("Current options include Gaussian Noise (apply noise of a certain level to each pixel), Rotation (of the image by certain degrees), and Occlusions (a black rectangle of your configuration is added to the image, hiding a certain part of the image). ")
+        st.caption("Current options include Gaussian Noise (apply noise of a certain level to each pixel), Rotation (of the image by certain degrees), and Occlusions (a black square of your configuration is added to the image, hiding a certain part of the image). ")
         st.caption("Check any combination. In backend, stacks in the follow order: noise, rotation, occlusion")
 
         # NOTE: Streamlit "help" feature for sliders displays a question box near the slider, showing an explanation upon hover.
@@ -135,24 +135,34 @@ if selected_image is not None:
 
         use_occlusion = st.checkbox("Occlusion")
         if use_occlusion:
+            
+            
+            # NOTE: at first I had a set static slider for the values for occlusion_size, occlusion_x, and occlusion_y. however it became clear
+            # that this causes problems since it isn't dependant on the actual image size uploaded by the user, and therefore the user can
+            # easily select parameters that are out of bounds of their selected image. So instead, I below use the actual image dimensions to calculate 
+            # the min, max, and default values for the occlusion parameters. 
+
+            original_copy = Image.open(selected_image).convert("RGB")
+            width, height = original_copy.size
+
+            st.markdown(f"Note for settings: Your original image has width of {width} pixels and height of {height} pixels.")
+
             occlusion_size = st.slider(
-                "Size of the black occlusion box in pixels.",
-                min_value = 10, max_value = 150, value = 64, step = 2,
-                help = "Width and height of the black occlusion rectangle to go on the image (location determined by the below controls)"
+                "Size (width/height) of the black occlusion box in pixels. Default is the image width over 5.",
+                min_value = 5, max_value = width - 5, value = width // 5, step = 2,
+                help = "Width and height of the black occlusion square to go on the image (location determined by the below controls)"
             )
 
-            # NOTE: fix later so it adapts to image size... :(
-
             occlusion_x = st.slider(
-                "Distance of the left edge of the occlusion rectangle from the left edge of the image, in pixels. Default is centered",
-                min_value = 0, max_value = 180, value = 50,
-                help = "Left edge of the occlusion rectangle. Default is centered"
+                "Distance of the left edge of the occlusion square from the left edge of the image, in pixels. Default is centered",
+                min_value = 0, max_value = width - 1, value = width // 2 - occlusion_size // 2,
+                help = "Left edge of the occlusion square. Default is centered"
             )
 
             occlusion_y = st.slider(
-                "Distance of the top edge of the occlusion rectangle from the top edge of the image, in pixels. Default is centered",
-                min_value = 0, max_value = 180, value = 50,
-                help = "Top edge of the occlusion rectangle. Default is centered"
+                "Distance of the top edge of the occlusion square from the top edge of the image, in pixels. Default is centered",
+                min_value = 0, max_value = height - 1, value = height // 2 - occlusion_size // 2,
+                help = "Top edge of the occlusion square. Default is centered"
             )
         else:
             occlusion_size = 0
@@ -208,6 +218,16 @@ if selected_image is not None:
         # In the case that no perturbations are applied, the layout is a simple two column layout
         # the 0.05 is a space between the two side by side columns.
         if not any_perturbation:
+            st.markdown("RESULTS (NO PERTURBATIONS APPLIED))")
+            st.markdown("Left is the original image, right is the Grad-CAM heatmap.")
+            st.markdown("What does the Grad-CAM mean?")
+            st.caption(
+                "Red regions are what most influenced the model's prediction."
+                "Blue regions had the LEAST influence on the model's prediction."
+                "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
+            )
+            st.markdown("Try applying perturbations next to see how the Grad-CAM heatmaps change!")
+
             col_original, col_spacer, col_heatmap = st.columns([1, 0.05, 1]) # original image, spacing, heatmap respectively
 
             with col_original:
@@ -217,47 +237,39 @@ if selected_image is not None:
             with col_heatmap:
                 st.markdown("GENERATED Grad-CAM HEATMAP")
                 st.image(original_overlaid, use_container_width=True)
-                st.header("What does the Grad-CAM mean?")
-                st.caption(
-                    "Red regions are what most influenced the model's prediction."
-                    "Blue regions had the LEAST influence on the model's prediction."
-                    "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
-                )
-        
+                
+    
         # the 2x2 display grid 
         else:
 
             st.markdown("RESULTS (2X2 GRID)")
-            st.caption("The top row are the images (original and with perturbations). The bottom row are the respective Grad-CAM heatmaps")
-            
+            st.markdown("The top row contains the images (original and with perturbations). The bottom row are the respective Grad-CAM heatmaps")
+            st.markdown("What does the Grad-CAM mean?")
+            st.caption(
+                "Red regions are what most influenced the model's prediction."
+                "Blue regions had the LEAST influence on the model's prediction."
+                "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
+            )
+            st.markdown("Try to analyze differences between the two heatmaps, and how and why the perturbations could cause hallucinations in the CNN!")
+
             # top part of the grid is the same code as in the if statement
             col_original, col_spacer, col_original_heatmap = st.columns([1, 0.05, 1])
             with col_original:
                 st.markdown("YOUR ORIGINAL IMAGE")
-                st.image(original_image, use_column_width=True)
+                st.image(original_image, use_container_width=True)
             with col_original_heatmap:
                 st.markdown("ORIGINAL (NO PERTURBATIONS) Grad-CAM HEATMAP")
                 st.image(original_overlaid, use_container_width=True)
-                st.header("What does the Grad-CAM mean?")
-                st.caption(
-                    "Red regions are what most influenced the model's prediction."
-                    "Blue regions had the LEAST influence on the model's prediction."
-                    "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
-                )
+                
             # bottom part of the grid
             col_new, col_spacer2, col_new_heatmap = st.columns([1, 0.05, 1])
             with col_new:
                 st.markdown("IMAGE WITH ALL PERTURBATIONS APPLIED")
-                st.image(perturbed_image, use_column_width=True)
+                st.image(perturbed_image, use_container_width=True)
             with col_new_heatmap:
                 st.markdown("FINAL Grad-CAM HEATMAP (after all applied image distortions)")
                 st.image(perturbed_overlaid, use_container_width=True)
-                st.header("What does the Grad-CAM mean?")
-                st.caption(
-                    "Red regions are what most influenced the model's prediction."
-                    "Blue regions had the LEAST influence on the model's prediction."
-                    "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
-                )
+                
 
             st.divider()
 
@@ -266,6 +278,7 @@ if selected_image is not None:
             
             if not any_perturbation:
                 st.markdown(f"TOP {top_k} PREDICTIONS:")
+                st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
                 num_cols = min(int(top_k), 5)
                 prediction_columns = st.columns(num_cols)
                 for i, (class_name, confidence) in enumerate(original_predictions):
@@ -280,6 +293,7 @@ if selected_image is not None:
 
                 with normal_prediction_column:
                     st.markdown("Original Predictions (with no perturbations applied)")
+                    st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
                     # Note: writing the prediction display in the same way as it was initially, if it looks messy, il change it to the column code thats in the if not any_perturbation if statement
                     for i, (class_name, confidence) in enumerate(original_predictions):
                         st.markdown(f"**#{i + 1}** {class_name}")
@@ -288,7 +302,8 @@ if selected_image is not None:
 
                 
                 with perturbed_prediction_column:
-
+                    st.markdown("Modified Predictions (after applied perturbations)")
+                    st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
                     for i, (class_name, confidence) in enumerate(perturbed_predictions):
                         st.markdown(f"**#{i + 1}** {class_name}")
                         st.progress(confidence / 100)
@@ -309,6 +324,7 @@ feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
 
 # note for the future
 
+# make everything look nice, make the UI look nice
 
 # instead of select an image, there will be a completely other option (highest layer) to instead view example outputs
 
