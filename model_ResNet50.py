@@ -6,7 +6,7 @@ import urllib.request
 import json
 import os
 
-# First step: create the model :D 
+# First step: create the model
 # DATE: April 16th, 2026
 
 # NOTE FOR THE FUTURE! As I work through everything, 

@@ -49,6 +49,9 @@ input_method = st.radio(
 )
 
 selected_image = None
+
+
+
 if input_method == "Upload your own image":
     uploaded_file = st.file_uploader(
         label="Upload an image",
@@ -83,9 +86,11 @@ else:
         st.warning("Example folder has no images???")
 
 
-# for now: just display the selected image!
+
 if selected_image is not None:
     st.divider()
+   
+    st.image(selected_image, width=300, caption="Selected image") # display the selected image
     st.subheader("Now, configure the settings of your trial. Use the controls below.")
 
     # There are now two additional inputs, not just one: the Top_K num predictions input and all the inputs for the perturbations.
@@ -217,104 +222,126 @@ if selected_image is not None:
 
         # In the case that no perturbations are applied, the layout is a simple two column layout
         # the 0.05 is a space between the two side by side columns.
-        if not any_perturbation:
-            st.markdown("RESULTS (NO PERTURBATIONS APPLIED))")
-            st.markdown("Left is the original image, right is the Grad-CAM heatmap.")
-            st.markdown("What does the Grad-CAM mean?")
-            st.caption(
-                "Red regions are what most influenced the model's prediction."
-                "Blue regions had the LEAST influence on the model's prediction."
-                "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
-            )
-            st.markdown("Try applying perturbations next to see how the Grad-CAM heatmaps change!")
 
+    
+        
+        # An issue I noticed was the image outputs were in different sizes, due to the overlaid images always being resized to 224x224 while the original images retain their original size. 
+        # I first tried resizing all images to a fixed size but that led to the original images becoming very blurry
+        # So instead, I resize the overlaid images to the original image size
+        # fromarray is needed as original_overlaid is a numpy array, not a PIL image
+        native_size = original_image.size
+        display_original_overlaid = Image.fromarray(original_overlaid).resize(native_size, Image.LANCZOS)
+
+        if not any_perturbation:
+            st.markdown("### Results")
+            st.caption("No Perturbations Applied")
+            st.caption("The original image is on the left, the Grad-CAM heatmap is on the right.")
+            st.caption("The model's predictions can be found below the heatmaps.")
+            
             col_original, col_spacer, col_heatmap = st.columns([1, 0.05, 1]) # original image, spacing, heatmap respectively
 
             with col_original:
-                st.markdown("YOUR ORIGINAL IMAGE")
+                st.markdown("Original Image")
                 st.image(original_image, use_container_width=True)
  
             with col_heatmap:
-                st.markdown("GENERATED Grad-CAM HEATMAP")
-                st.image(original_overlaid, use_container_width=True)
+                st.markdown("Generated Grad-CAM Heatmap")
+                st.image(display_original_overlaid, use_container_width=True)
                 
     
         # the 2x2 display grid 
         else:
 
-            st.markdown("RESULTS (2X2 GRID)")
-            st.markdown("The top row contains the images (original and with perturbations). The bottom row are the respective Grad-CAM heatmaps")
-            st.markdown("What does the Grad-CAM mean?")
-            st.caption(
-                "Red regions are what most influenced the model's prediction."
-                "Blue regions had the LEAST influence on the model's prediction."
-                "To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
-            )
-            st.markdown("Try to analyze differences between the two heatmaps, and how and why the perturbations could cause hallucinations in the CNN!")
+            st.markdown("### Results")
+            perturbation_summary = [] # this is to tell the user what perturbations they applied. 
+            if use_noise:
+                perturbation_summary.append(f"Gaussian Noise (strength={noise_strength})")
+            if use_rotation:
+                perturbation_summary.append(f"Rotation ({rotation_angle}°)")
+            if use_occlusion:
+                perturbation_summary.append(f"Occlusion ({occlusion_size}×{occlusion_size}px at x={occlusion_x}, y={occlusion_y})")
 
+            st.caption(f"Perturbations applied: {', '.join(perturbation_summary)}")
+            st.caption("The top row contains the images (original and with perturbations). The bottom row are the respective Grad-CAM heatmaps.")
+            st.caption("The model's original and perturbed predictions can be found below the heatmaps.")
             # top part of the grid is the same code as in the if statement
             col_original, col_spacer, col_original_heatmap = st.columns([1, 0.05, 1])
             with col_original:
-                st.markdown("YOUR ORIGINAL IMAGE")
+                st.markdown("Original Image")
                 st.image(original_image, use_container_width=True)
             with col_original_heatmap:
-                st.markdown("ORIGINAL (NO PERTURBATIONS) Grad-CAM HEATMAP")
-                st.image(original_overlaid, use_container_width=True)
+                st.markdown("Original (No Perturbations) Grad-CAM Heatmap")
+                st.image(display_original_overlaid, use_container_width=True)
                 
             # bottom part of the grid
+            
+            
+            display_perturbed_overlaid = Image.fromarray(perturbed_overlaid).resize(native_size)
             col_new, col_spacer2, col_new_heatmap = st.columns([1, 0.05, 1])
             with col_new:
-                st.markdown("IMAGE WITH ALL PERTURBATIONS APPLIED")
+                st.markdown("Perturbed Image")
                 st.image(perturbed_image, use_container_width=True)
             with col_new_heatmap:
-                st.markdown("FINAL Grad-CAM HEATMAP (after all applied image distortions)")
-                st.image(perturbed_overlaid, use_container_width=True)
+                st.markdown("Final Perturbed Grad-CAM Heatmap")
+                st.image(display_perturbed_overlaid, use_container_width=True)
                 
 
-            st.divider()
-
-            # Now for the predictions, again using the boolean any_perturbation
-            # I changed the initial prediction code to use a seperate column for each prediction instead of each prediction being a markdown. This just looks cleaner and nicer
             
-            if not any_perturbation:
-                st.markdown(f"TOP {top_k} PREDICTIONS:")
+
+            
+        st.markdown("What does the Grad-CAM mean?")
+        st.caption(
+            "Red regions are what most influenced the model's prediction."
+            " Blue regions had the least influence on the model's prediction."
+            " To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
+        )
+        if not any_perturbation:
+            st.caption("Try applying perturbations next to see how the Grad-CAM heatmaps change!")
+        else:
+            st.caption("Try to analyze differences between the two (original vs. perturbed) heatmaps, and how and why the perturbations could cause hallucinations in the CNN!")
+        st.divider()
+
+        # Now for the predictions, again using the boolean any_perturbation
+        # I changed the initial prediction code to use a seperate column for each prediction instead of each prediction being a markdown. This just looks cleaner and nicer
+        if not any_perturbation:
+            st.markdown(f"TOP {top_k} PREDICTIONS:")
+            st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
+            num_cols = min(int(top_k), 5)
+            prediction_columns = st.columns(num_cols)
+            for i, (class_name, confidence) in enumerate(original_predictions):
+                with prediction_columns[i % num_cols]:
+                    st.markdown(f"**#{i + 1}** {class_name}")
+                    st.progress(confidence / 100)
+                    st.caption(f"{confidence:.2f}%")
+        else:
+            # Left and right columns, built the same way as the columns for the heatmaps (0.05 spacing in between)
+
+            normal_prediction_column, prediction_space_column, perturbed_prediction_column = st.columns([1, 0.05, 1])
+
+            with normal_prediction_column:
+                st.markdown("Original Predictions (with no perturbations applied)")
                 st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
-                num_cols = min(int(top_k), 5)
-                prediction_columns = st.columns(num_cols)
+                # Note: writing the prediction display in the same way as it was initially, if it looks messy, il change it to the column code thats in the if not any_perturbation if statement
                 for i, (class_name, confidence) in enumerate(original_predictions):
-                    with prediction_columns[i % num_cols]:
-                        st.markdown(f"**#{i + 1}** {class_name}")
-                        st.progress(confidence / 100)
-                        st.caption(f"{confidence:.2f}%")
-            else:
-                # Left and right columns, built the same way as the columns for the heatmaps (0.05 spacing in between)
+                    st.markdown(f"**#{i + 1}** {class_name}")
+                    st.progress(confidence / 100)
+                    st.caption(f"{confidence:.2f}%")
 
-                normal_prediction_column, prediction_space_column, perturbed_prediction_column = st.columns([1, 0.05, 1])
-
-                with normal_prediction_column:
-                    st.markdown("Original Predictions (with no perturbations applied)")
-                    st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
-                    # Note: writing the prediction display in the same way as it was initially, if it looks messy, il change it to the column code thats in the if not any_perturbation if statement
-                    for i, (class_name, confidence) in enumerate(original_predictions):
-                        st.markdown(f"**#{i + 1}** {class_name}")
-                        st.progress(confidence / 100)
-                        st.caption(f"{confidence:.2f}%")
-
-                
-                with perturbed_prediction_column:
-                    st.markdown("Modified Predictions (after applied perturbations)")
-                    st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
-                    for i, (class_name, confidence) in enumerate(perturbed_predictions):
-                        st.markdown(f"**#{i + 1}** {class_name}")
-                        st.progress(confidence / 100)
-                        st.caption(f"{confidence:.2f}%")
+            
+            with perturbed_prediction_column:
+                st.markdown("Modified Predictions (after applied perturbations)")
+                st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
+                for i, (class_name, confidence) in enumerate(perturbed_predictions):
+                    st.markdown(f"**#{i + 1}** {class_name}")
+                    st.progress(confidence / 100)
+                    st.caption(f"{confidence:.2f}%")
 
             
 
 
-st.divider()
-st.subheader("MORE FEATURES COMING SOON! Most notably, this will include an option to choose and analyze key example outputs instead of selecting your own image. A download feature will also be added. I also hope to add significantly more labels to feed into the model for a greater and more realistic variety for classification. This will be a polished app very soon, so STAY IN TOUCH with this project.")
-feedback = st.text_input("Questions? Email me at aarusharya@berkeley.edu")
+        st.divider()
+        st.markdown("MORE FEATURES COMING SOON! Most notably, this will include an option to choose and analyze key example outputs instead of selecting your own image. A download feature will also be added. I also hope to add significantly more labels to feed into the model for a greater and more realistic variety for classification. This will be a polished app very soon, so STAY IN TOUCH with this project.")
+        st.caption("Questions? Email me at aarusharya@berkeley.edu")
 
 
 
