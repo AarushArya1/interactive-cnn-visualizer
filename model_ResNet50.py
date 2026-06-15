@@ -105,7 +105,7 @@ def predict(model, image_tensor, labels, top_k=5):
             # converts to a percentage
             # the 2 at the end keeps 2 decimal places
         
-            results.append((class_name, confidence)) # I just spent 30 min trying to figure out what was wrong and then I realized that this line was initially outside of the loop
+            results.append((class_name, confidence)) 
         return results
     
 

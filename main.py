@@ -9,7 +9,21 @@ from perturbations import add_gaussian_noise
 from perturbations import add_rotation
 from perturbations import add_occlusion
  
-# HOW TO RUN (NOTE: SEE BOTTOM FOR OUTPUT DETAILS)
+
+ # MAIN.PY IS OUTDATED AND WAS USED AS A TERMINAL BASED WAY TO TEST THE VERY BASIC VERSION OF THE PROJECT.
+
+
+ # PLEASE RUN THE STREAMLIT APP INSTEAD FOR FULL FUNCTIONALITY. SEE APP.PY
+
+
+
+ 
+
+
+
+
+
+# HOW TO RUN (NOTE: OUTDATED!!! RUN APP.PY INSTEAD)
 #
 #   1. Open your terminal and navigate to your project folder
 #
@@ -24,8 +38,8 @@ from perturbations import add_occlusion
 #   4. The following perturbation options are available as arguments to modify the strength of the perturbations:
 #        --noise_strength    intensity of the Gaussian noise (default: 25, range: 5-100)
 #        --rotation_angle    degrees to rotate counter-clockwise (default: 30)
-#        --occlusion_size    size of the black rectangle in pixels (default: 64)
-#        --occlusion_x        left edge of rectangle in pixels from left edge of the image (default: auto centered)
+#        --occlusion_size    width and height of the black rectangle in pixels (default: 64)
+#        --occlusion_x       left edge of rectangle in pixels from left edge of the image (default: auto centered)
 #        --occlusion_y       top edge of rectangle in pixels from top edge of the image (default: auto centered)
 #
 #   5. Perturbations can be stacked in any combination as arguments. see examples below:

@@ -13,7 +13,9 @@ from perturbations import add_gaussian_noise, add_rotation, add_occlusion
 # HOW TO RUN:
 # python -m streamlit run app.py
 
-
+# project two-line summary: 
+# An interactive platform for exploring CNN interpretability and robustness. 
+# Users can compare Grad-CAM explanations across multiple architectures and evaluate prediction stability under perturbations such as Gaussian noise, rotation, and occlusion.
 st.set_page_config(
     page_title = "Interactive CNN Visualizer",
     page_icon = "🤖",
@@ -33,9 +35,25 @@ model = get_model()
 labels = get_labels()
 
 st.title("Interactive CNN Visualizer")
-st.markdown(
-    " INSTRUCTIONS and BACKGROUND (WHAT THIS IS) TO BE INSERTED HERE. "
-)
+
+# was initially having all of this text below the title, but it is nicer to have buttons and popups for a cleaner UI
+instructions_column, background_column, spacing_column = st.columns([1, 1, 4])
+
+with instructions_column:
+    if st.button("How to Use"):
+        @st.dialog("How to Use")
+        def show_instructions():
+            st.markdown("WILL BE ADDED SOON")
+        show_instructions()
+
+    with background_column:
+        if st.button("Background & References"):
+            @st.dialog("Background & References")
+            def show_background():
+                st.markdown("Background and references coming soon.")
+            show_background()
+
+
 st.divider()
 
 # Image selection is the first step
@@ -263,7 +281,7 @@ if selected_image is not None:
 
             st.caption(f"Perturbations applied: {', '.join(perturbation_summary)}")
             st.caption("The top row contains the images (original and with perturbations). The bottom row are the respective Grad-CAM heatmaps.")
-            st.caption("The model's original and perturbed predictions can be found below the heatmaps.")
+            st.caption("The model's original and perturbed predictions can be found below the heatmaps. You can also see the confidence changes of the model for its original prediction after image perturbations.")
             # top part of the grid is the same code as in the if statement
             col_original, col_spacer, col_original_heatmap = st.columns([1, 0.05, 1])
             with col_original:
@@ -314,9 +332,12 @@ if selected_image is not None:
                     st.progress(confidence / 100)
                     st.caption(f"{confidence:.2f}%")
         else:
-            # Left and right columns, built the same way as the columns for the heatmaps (0.05 spacing in between)
 
-            normal_prediction_column, prediction_space_column, perturbed_prediction_column = st.columns([1, 0.05, 1])
+            # Columns, build similarly to the columns for the heatmaps (0.05 spacing in between)
+            # NOTE:decided to also calculate confidence drops, which states how much the model's confidence decreased (in percent)
+            # for the original prediction after the perturbations were applied. 
+
+            normal_prediction_column, prediction_space_column, perturbed_prediction_column, drop_space_column, confidence_drop_column = st.columns([1, 0.05, 1, 0.05, 0.6])
 
             with normal_prediction_column:
                 st.markdown("Original Predictions (with no perturbations applied)")
@@ -336,6 +357,40 @@ if selected_image is not None:
                     st.progress(confidence / 100)
                     st.caption(f"{confidence:.2f}%")
 
+
+            # displaying CONFIDENCE DROPS for each prediction
+            confidence_drops = []
+
+            # looping through both the original and perturbed predictions to get all confidence drops and append it 
+            for (original_class, original_confidence), (perturbation_class, perturbation_confidence) in zip(original_predictions, perturbed_predictions):
+                drop = perturbation_confidence - original_confidence
+                confidence_drops.append((original_class, perturbation_class, original_confidence, perturbation_confidence, drop))
+            
+            with confidence_drop_column:
+                st.markdown("Confidence Change (In Percentages)")
+                st.caption("Change in confidence for INITIAL PREDICTION after perturbations. ")
+                z = 0
+                for orig_class, pert_class, orig_conf, pert_conf, drop in confidence_drops:
+                    
+                    st.markdown(" ")
+                    # different colors for positive change and negative change, just for visual appeal
+                    # above: never mind, can't change colors with streamlit markdown so instead just using emojis :)
+                    # above: can use HTML instead
+                    if drop < 0:
+                        st.markdown(f"**#{z + 1} <span style='color:red'>{drop:+.2f}%</span>**", unsafe_allow_html=True)
+                    elif drop > 0:
+                        st.markdown(f"**#{z + 1} <span style='color:green'>{drop:+.2f}%</span>**", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"**#{z + 1} <span style='color:gray'>0.00%</span>**", unsafe_allow_html=True)
+                    st.progress(100) # just for alignment with the other rows... best option I had to be honest
+                    st.caption(" ")
+                    z = z + 1
+                    
+                    
+                    
+
+
+
             
 
 
@@ -344,25 +399,16 @@ if selected_image is not None:
         st.caption("Questions? Email me at aarusharya@berkeley.edu")
 
 
-
-
-
-
-
 # note for the future
 
-# make everything look nice, make the UI look nice
+# add confidence drop to the predictions column
+# add different model architectures! big step!! 
+# fill in how to use instructions, the background/references
+# add to example menu (so there are a lot more example options)
+# polish/standardize file structure
+# possibly a download button
+# update Readme.MD to be nice and insight-driven (showing instructions, test examples, etc)
 
-# instead of select an image, there will be a completely other option (highest layer) to instead view example outputs
-
-# need a download result feature
-
-# add more to the examples menu, standardize this project and the file structure (at the end, this is a later step)
-# and format the "or choose one of our images" and  "choose an example output" to look nice -- like those images are actually there. so its visually appealing. will need to find a way to do this later on.
-
-# oh yeah also should have a menu bar with other options like references, background, about (basically readme.md) and need to populate
-
-# SHOULD FEED IN MORE LABELS TO THE MODEL!!!! SO IT CAN DO OTHER, MORE COMPLEX STUFF
 
 
 
