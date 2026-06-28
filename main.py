@@ -10,8 +10,9 @@ from perturbations import add_rotation
 from perturbations import add_occlusion
  
 
- # MAIN.PY IS OUTDATED AND WAS USED AS A TERMINAL BASED WAY TO TEST THE VERY BASIC VERSION OF THE PROJECT.
+ # main.py IS OUTDATED AND WAS USED AS A TERMINAL BASED WAY TO TEST THE VERY BASIC VERSION OF THE PROJECT.
 
+ # main.py does not include differing model architectures. Please run APP.PY instead
 
  # PLEASE RUN THE STREAMLIT APP INSTEAD FOR FULL FUNCTIONALITY. SEE APP.PY
 

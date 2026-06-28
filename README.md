@@ -1,4 +1,4 @@
-# interactive-cnn-visualizer
+<!-- # interactive-cnn-visualizer
 
 This project is currently IN PROGRESS
 
@@ -43,4 +43,4 @@ See resulting side-by-side heatmaps: left is for the image without any noise, ri
 
 
 
-
+ -->

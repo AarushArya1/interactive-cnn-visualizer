@@ -329,7 +329,6 @@ if selected_image is not None:
             for i, (class_name, confidence) in enumerate(original_predictions):
                 with prediction_columns[i % num_cols]:
                     st.markdown(f"**#{i + 1}** {class_name}")
-                    st.progress(confidence / 100)
                     st.caption(f"{confidence:.2f}%")
         else:
 
@@ -345,7 +344,6 @@ if selected_image is not None:
                 # Note: writing the prediction display in the same way as it was initially, if it looks messy, il change it to the column code thats in the if not any_perturbation if statement
                 for i, (class_name, confidence) in enumerate(original_predictions):
                     st.markdown(f"**#{i + 1}** {class_name}")
-                    st.progress(confidence / 100)
                     st.caption(f"{confidence:.2f}%")
 
             
@@ -354,7 +352,6 @@ if selected_image is not None:
                 st.caption("The percentages from 1 to 100 indicate the model's CONFIDENCE in that particular prediction.")
                 for i, (class_name, confidence) in enumerate(perturbed_predictions):
                     st.markdown(f"**#{i + 1}** {class_name}")
-                    st.progress(confidence / 100)
                     st.caption(f"{confidence:.2f}%")
 
 
@@ -382,16 +379,11 @@ if selected_image is not None:
                         st.markdown(f"**#{z + 1} <span style='color:green'>{drop:+.2f}%</span>**", unsafe_allow_html=True)
                     else:
                         st.markdown(f"**#{z + 1} <span style='color:gray'>0.00%</span>**", unsafe_allow_html=True)
-                    st.progress(100) # just for alignment with the other rows... best option I had to be honest
+                    
                     st.caption(" ")
                     z = z + 1
                     
                     
-                    
-
-
-
-            
 
 
         st.divider()
@@ -401,12 +393,11 @@ if selected_image is not None:
 
 # note for the future
 
-# add confidence drop to the predictions column
+# add confidence drop to the predictions column NOTE: DONE
 # add different model architectures! big step!! 
 # fill in how to use instructions, the background/references
 # add to example menu (so there are a lot more example options)
 # polish/standardize file structure
-# possibly a download button
 # update Readme.MD to be nice and insight-driven (showing instructions, test examples, etc)
 
 
