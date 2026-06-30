@@ -76,7 +76,14 @@ def predict(model, image_tensor, labels, top_k=5):
            
             results.append((class_name, confidence)) 
         return results
-    
+
+# NOTE: important. something I didn't initially realize when implementing the new architectures:
+# EfficientNetB0, VGG 16, and ResNet50, each have a different final convolutional layer
+# that is passed into gradcam.py.
+
+def get_gradcam_layer(model):
+    return model.features[-2]
+
 
 # NOTE: TEST EFFICIENTNETB0 MODEL PREDICTION, UNCOMMENT 
 

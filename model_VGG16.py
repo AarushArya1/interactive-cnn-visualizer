@@ -65,6 +65,14 @@ def preprocess_image(image_source):
     tensor = transform(image)
     return tensor.unsqueeze(0) 
 
+# NOTE: important. something I didn't initially realize when implementing the new architectures:
+# VGG 16, ResNet50, and (later) EfficientNetB0 each have a different final convolutional layer
+# that is passed into gradcam.py.
+
+def get_gradcam_layer(model):
+    return model.features[-1]
+
+
 # same as in model_ResNet50.py
 def predict(model, image_tensor, labels, top_k=5):
     

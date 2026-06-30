@@ -14,11 +14,12 @@ import cv2
 # Since layer4 is the last layer in ResNet-50
 # 2. Run a backward pass from the predicted class score, get the gradients flowing into layer4
 
-def generate_gradcam(model, image_tensor, class_idx=None):
+def generate_gradcam(model, image_tensor, target_layer, class_idx=None):
     #explanation of method:
     # image_tensor is the preprocessed tensor for the given image, of shape (1, 3, 224, 224)
     # class_idx is none because we will use the top predicted class automatically
-    
+    # after adding different model architectures, needed to add a new parameter target_layer since the different architectures have different convolutional layers.
+
     #returns a 2d numpy array (224, 224) with values [0, 1]
     # higher values --> regions that most influenced the prediction
     # Later, we will use the returned array to create the heatmap
@@ -37,8 +38,8 @@ def generate_gradcam(model, image_tensor, class_idx=None):
         gradients.append(grad_output[0])
         #The above tells us how much each activation in layer 4 actually influenced the final prediction score
 
-    forward_handle = model.layer4.register_forward_hook(forward_hook)
-    backward_handle = model.layer4.register_full_backward_hook(backward_hook)
+    forward_handle = target_layer.register_forward_hook(forward_hook)
+    backward_handle = target_layer.register_full_backward_hook(backward_hook)
 
     model.eval()
     logits = model(image_tensor)

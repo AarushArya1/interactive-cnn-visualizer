@@ -49,7 +49,7 @@ def load_model():
 
 
 
-# It took a while for me to understand what the following function actually returns :)
+# It took a while for me to understand what the following function actually returns 
 # get transform returns a callable function object, that when passed an image, applies the 
 # following transformations and returns a tensor that the model can use for training
 def get_transform_object():
@@ -107,7 +107,13 @@ def predict(model, image_tensor, labels, top_k=5):
         
             results.append((class_name, confidence)) 
         return results
-    
+
+# NOTE: important. something I didn't initially realize when implementing the new architectures:
+# VGG 16, ResNet50, and (later) EfficientNetB0 each have a different final convolutional layer
+# that is passed into gradcam.py.
+
+def get_gradcam_layer(model):
+    return model.layer4
 
 # NOTE: TEST MODEL PREDICTION, UNCOMMENT 
 
@@ -118,7 +124,7 @@ def predict(model, image_tensor, labels, top_k=5):
 
 # if __name__ == "__main__":
    
-#     print("Time to load the model")
+#     
 #     model = load_model()
 #     labels = load_labels()
  

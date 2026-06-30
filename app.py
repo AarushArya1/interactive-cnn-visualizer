@@ -1,7 +1,12 @@
 
 import streamlit as st
 import os
-from model_ResNet50 import load_model, load_labels, preprocess_image, predict
+
+# NOTE: DO NOT uncomment the imports! these are imported conditionally later in the file.
+
+#from model_ResNet50 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+#from model_VGG16 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+#from model_EfficientNetB0 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
 from PIL import Image 
 
 from gradcam import generate_gradcam, overlay_heatmap_on_image
@@ -22,17 +27,6 @@ st.set_page_config(
     layout = "wide" # to use the full browser width
 )
 
-# 
-@st.cache_resource
-def get_model():
-    return load_model()
- 
-@st.cache_resource
-def get_labels():
-    return load_labels()
- 
-model = get_model()
-labels = get_labels()
 
 st.title("Interactive CNN Visualizer")
 
@@ -56,9 +50,50 @@ with instructions_column:
 
 st.divider()
 
-# Image selection is the first step
+st.subheader("Step 1: Select a Model Architecture")
+model_choice = st.selectbox(
+    "Choose one of three vastly different model architectures: ResNet-50, EfficientNet-B0, and VGG-16.",
+    ["ResNet-50", "VGG-16", "EfficientNet-B0"],
+    help="ResNet-50: Uses skip connections for easy gradient flow in the network. Reliable image classification and this project's baseline. VGG-16: A classic CNN with a more sequential structure, which leads to different attention patterns. EfficientNet-B0: Balances depth, width and resolution to extract features as efficiently as possible."
+)
+st.caption("Different architectures fundamentally may lead to different predictions and produce different Grad-CAM attention patterns, especially when subject to varying image complexity and varying perturbation levels (select perturbations in Step 3.)")
+st.caption('Click the "?" icon in the corner above the dropdown to learn more.')
+st.caption("For further background on these model architectures and how they differ, see Background & References.")
 
-st.subheader("Select Image: follow the steps below")
+
+# Different model architectures implemented via selectbox, so we need to account for that in get_model and get_labels by passing in the model as a parameter later on
+
+# to avoid issues with the imports, probably best to just import whatever aligns with the chosen model.
+# decided to just have a seperate method to do this although probably won't need it more than once?
+def get_model_functions(architecture):
+    if architecture == "ResNet-50":
+        from model_ResNet50 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+    elif architecture == "VGG-16":
+        from model_VGG16 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+    elif architecture == "EfficientNet-B0":
+        from model_EfficientNetB0 import load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+    else:
+        print(f"Unknown Architecture {architecture} passed through??")
+
+    return load_model, load_labels, preprocess_image, predict, get_gradcam_layer
+
+load_model, load_labels, preprocess_image, predict, get_gradcam_layer = get_model_functions(model_choice)
+
+@st.cache_resource
+def get_model(architecture):
+    load_model, _, _, _, _ = get_model_functions(architecture)
+    return load_model()
+ 
+@st.cache_resource
+def get_labels(architecture):
+    _, load_labels, _, _, _ = get_model_functions(architecture)
+    return load_labels()
+ 
+model = get_model(model_choice)
+labels = get_labels(model_choice)
+# Now, model and labels are set correctly
+
+st.subheader("Step 2: Select an Image: follow the steps below")
 
 input_method = st.radio(
     label = "Choose an image in one of the following ways: ",
@@ -67,7 +102,6 @@ input_method = st.radio(
 )
 
 selected_image = None
-
 
 
 if input_method == "Upload your own image":
@@ -109,7 +143,7 @@ if selected_image is not None:
     st.divider()
    
     st.image(selected_image, width=300, caption="Selected image") # display the selected image
-    st.subheader("Now, configure the settings of your trial. Use the controls below.")
+    st.subheader("Step 3: Configure the settings of your trial. Use the controls below.")
 
     # There are now two additional inputs, not just one: the Top_K num predictions input and all the inputs for the perturbations.
     # Therefore, these controls will sit side by side in two columns.
@@ -202,13 +236,14 @@ if selected_image is not None:
 
 
     # now display predictions and grad cam. took me a time to handle edge cases where an image was actually not selected by the user. 
-    # but while doing so, i learned a lot from the streamlit api. even adder a spinner. I'll probably work on polishing this UI at the very end of this project
+    
     if predict_clicked:
         with st.spinner("Model running...Grad-CAM generating (with all applied perturbation(s))..."): # for future: Perturbated Grad-CAM generating...
             original_image = Image.open(selected_image).convert("RGB")
             original_tensor = preprocess_image(original_image)
             original_predictions = predict(model, original_tensor, labels, top_k = int(top_k))
-            original_heatmap = generate_gradcam(model, original_tensor) # calling grad cam methods
+            target_layer = get_gradcam_layer(model)
+            original_heatmap = generate_gradcam(model, original_tensor, target_layer) # calling grad cam methods
             original_overlaid = overlay_heatmap_on_image(original_image, original_heatmap)
 
 
@@ -224,7 +259,8 @@ if selected_image is not None:
                 perturbed_tensor = preprocess_image(perturbed_image)
                 # the new predictions
                 perturbed_predictions = predict(model, perturbed_tensor, labels, top_k = int(top_k))
-                perturbed_heatmap = generate_gradcam(model, perturbed_tensor) 
+                target_layer = get_gradcam_layer(model)
+                perturbed_heatmap = generate_gradcam(model, perturbed_tensor, target_layer) 
                 perturbed_overlaid = overlay_heatmap_on_image(perturbed_image, perturbed_heatmap)
 
 
@@ -252,6 +288,7 @@ if selected_image is not None:
 
         if not any_perturbation:
             st.markdown("### Results")
+            st.caption(f"Selected Model Architecture: {model_choice}")
             st.caption("No Perturbations Applied")
             st.caption("The original image is on the left, the Grad-CAM heatmap is on the right.")
             st.caption("The model's predictions can be found below the heatmaps.")
@@ -270,7 +307,8 @@ if selected_image is not None:
         # the 2x2 display grid 
         else:
 
-            st.markdown("### Results")
+            st.subheader("Results")
+            st.caption(f"Selected Model Architecture: {model_choice}")
             perturbation_summary = [] # this is to tell the user what perturbations they applied. 
             if use_noise:
                 perturbation_summary.append(f"Gaussian Noise (strength={noise_strength})")
@@ -313,10 +351,7 @@ if selected_image is not None:
             " Blue regions had the least influence on the model's prediction."
             " To learn more about how Grad-CAM (or the rest of this project) works, see References or Background from the menu bar" # for future implementation btw 
         )
-        if not any_perturbation:
-            st.caption("Try applying perturbations next to see how the Grad-CAM heatmaps change!")
-        else:
-            st.caption("Try to analyze differences between the two (original vs. perturbed) heatmaps, and how and why the perturbations could cause hallucinations in the CNN!")
+        
         st.divider()
 
         # Now for the predictions, again using the boolean any_perturbation
@@ -382,19 +417,32 @@ if selected_image is not None:
                     
                     st.caption(" ")
                     z = z + 1
-                    
-                    
-
-
+        
         st.divider()
-        st.markdown("MORE FEATURES COMING SOON! Most notably, this will include an option to choose and analyze key example outputs instead of selecting your own image. A download feature will also be added. I also hope to add significantly more labels to feed into the model for a greater and more realistic variety for classification. This will be a polished app very soon, so STAY IN TOUCH with this project.")
-        st.caption("Questions? Email me at aarusharya@berkeley.edu")
+
+        # one of my favorite parts of this project is 
+        st.subheader("Keep Experimenting!")
+        if not any_perturbation:
+            
+            st.caption("Try applying perturbations next to see how the Grad-CAM heatmaps and predictions/confidence levels change!")
+            st.caption("Additionally, try comparing different model architectures on the same image under identical (or no) perturbations. See if predictions remain the same, if (for trials with perturbations) prediction confidences drop more for a certain model, or if the Grad-CAM visualizations focus on different image regions.")
+            st.caption("To run another experiment, go back and change any of the trial settings!")
+        else:
+            
+            st.caption("Try to analyze differences between the two (original vs. perturbed) heatmaps, and how and why the perturbations could therefore influence the predictions, confidence drops, and/or cause potential hallucinations.")
+            st.caption("Additionally, try comparing different model architectures on the same image under identical (or no) perturbations. See if predictions remain the same, if prediction confidences drop more for a certain model, or if the Grad-CAM visualizations focus on different image regions.")
+            st.caption("To run another experiment, go back and change any of the trial settings!")
+                    
+        
+        st.divider()
+        
+        st.caption("Please email me at aarusharya@berkeley.edu")
 
 
 # note for the future
 
 # add confidence drop to the predictions column NOTE: DONE
-# add different model architectures! big step!! 
+# add different model architectures! big step!! NOTE: DONE
 # fill in how to use instructions, the background/references
 # add to example menu (so there are a lot more example options)
 # polish/standardize file structure
