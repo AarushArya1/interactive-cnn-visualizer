@@ -37,14 +37,16 @@ with instructions_column:
     if st.button("How to Use"):
         @st.dialog("How to Use")
         def show_instructions():
-            st.markdown("WILL BE ADDED SOON")
+            with open("instructions.md", "r") as f:
+                st.markdown(f.read()) # see the file instructions.md
         show_instructions()
 
     with background_column:
         if st.button("Background & References"):
             @st.dialog("Background & References")
             def show_background():
-                st.markdown("Background and references coming soon.")
+                with open("background_references.md", "r") as f:
+                    st.markdown(f.read()) # see the file background_references.md
             show_background()
 
 
