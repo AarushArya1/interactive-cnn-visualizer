@@ -19,7 +19,7 @@ This applications is a visual exploration of image classification model interpre
 
 ## Interpreting the Results
 
-1. The Gradient-weighted Class Activation Mapping (Grad-CAM) heatmap highlights regions that most influenced the model's prediction (these regions are shown as warmer).
+1. The Gradient-weighted Class Activation Mapping (Grad-CAM) heatmap highlights regions that most influenced the model's prediction (these regions are warmer).
 2. You can see the resulting Grad-CAM heatmaps for both your original image side-by-side with (if applicable) your image with your selected perturbations applied. This can allow you to visualize how the attention of your selected model changes due to the perturbations, from which you can make inferences as to how and why the predictions may have changed. 
 3. The original predictions of the model (for the base image) and the predictions of the model after the image was perturbed are both shown. The confidence drop column shows the change in the model's confidence for each prediction after the image was perturbed. These can indicate a model's sensitivity to perturbations and issues in model robustness. 
 

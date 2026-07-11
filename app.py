@@ -42,8 +42,8 @@ with instructions_column:
         show_instructions()
 
     with background_column:
-        if st.button("Background & References"):
-            @st.dialog("Background & References")
+        if st.button("Background, References, & Tools Used"):
+            @st.dialog("Background, References, & Tools Used")
             def show_background():
                 with open("background_references.md", "r") as f:
                     st.markdown(f.read()) # see the file background_references.md
@@ -60,7 +60,7 @@ model_choice = st.selectbox(
 )
 st.caption("Different architectures fundamentally may lead to different predictions and produce different Grad-CAM attention patterns, especially when subject to varying image complexity and varying perturbation levels (select perturbations in Step 3.)")
 st.caption('Click the "?" icon in the corner above the dropdown to learn more.')
-st.caption("For further background on these model architectures and how they differ, see Background & References.")
+st.caption("For further background on these model architectures and how they differ, see Background, References, & Tools Used.")
 
 
 # Different model architectures implemented via selectbox, so we need to account for that in get_model and get_labels by passing in the model as a parameter later on
