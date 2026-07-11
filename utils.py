@@ -1,2 +1,0 @@
-print("For the miscellaneous")
-

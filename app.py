@@ -45,6 +45,8 @@ with instructions_column:
         if st.button("Background, References, & Tools Used"):
             @st.dialog("Background, References, & Tools Used")
             def show_background():
+                st.components.v1.html("<script>window.parent.document.querySelector('[data-testid=\"stDialog\"]').scrollTop = 0;</script>", height=0)
+
                 with open("background_references.md", "r") as f:
                     st.markdown(f.read()) # see the file background_references.md
             show_background()
@@ -99,7 +101,7 @@ st.subheader("Step 2: Select an Image: follow the steps below")
 
 input_method = st.radio(
     label = "Choose an image in one of the following ways: ",
-    options = ["Upload your own image", "Choose an example image (use the dropdown)"],
+    options = ["Upload your own image", "Choose an example image (use the extensive dropdown, scroll down to see options)"],
     horizontal = True
 )
 
@@ -445,9 +447,9 @@ if selected_image is not None:
 
 # add confidence drop to the predictions column NOTE: DONE
 # add different model architectures! big step!! NOTE: DONE
-# fill in how to use instructions, the background/references
-# add to example menu (so there are a lot more example options)
-# polish/standardize file structure
+# fill in how to use instructions, the background/references NOTE: DONE 
+# add to example menu (so there are a lot more example options) NOTE: DONE
+# polish/standardize file structure NOTE: DONE, this is okay for now I think. 
 # update Readme.MD to be nice and insight-driven (showing instructions, test examples, etc)
 
 

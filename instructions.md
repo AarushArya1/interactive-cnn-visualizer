@@ -12,6 +12,7 @@ This applications is a visual exploration of image classification model interpre
 2. Choose an image. Either upload your own image or select an example image.
     - The best images for visualization have good lighting, high resolution, and have a clearly visible object with minimal background clutter.
     - However, it is recommended to test a wide range of images.
+    - If you would like to select an example image instead, know that the catalog is extensive and contains a mix of basic images and more interesting images that may lead to interesting attention patterns.
 3. Configure your trial by choosing perturbations.
     - You can also modify the settings of perturbations (e.g. Gaussian noise strength, rotation angle, occlusion box dimensions & location)
 4. Click "Run" to generate the results.
@@ -26,7 +27,7 @@ This applications is a visual exploration of image classification model interpre
 ## Try:
 
 1. Different model architectures may focus on different image regions
-2. Certain types of image perturbations may be the most severe for different architectures and/or different images
+2. Certain types of image perturbations may be the most severe for different architectures and/or different/more unique images
 3. The most insightful heatmap comparisons may correspond to false predictions and/or huge confidence drops
 
 
