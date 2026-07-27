@@ -15,12 +15,8 @@ from perturbations import add_gaussian_noise, add_rotation, add_occlusion
 
 
 
-# HOW TO RUN:
-# python -m streamlit run app.py
 
-# project two-line summary: 
-# An interactive platform for exploring CNN interpretability and robustness. 
-# Users can compare Grad-CAM explanations across multiple architectures and evaluate prediction stability under perturbations such as Gaussian noise, rotation, and occlusion.
+
 st.set_page_config(
     page_title = "Interactive CNN Visualizer",
     page_icon = "🤖",
@@ -441,17 +437,6 @@ if selected_image is not None:
         st.divider()
         
         st.caption("Please email me at aarusharya@berkeley.edu")
-
-
-# note for the future
-
-# add confidence drop to the predictions column NOTE: DONE
-# add different model architectures! big step!! NOTE: DONE
-# fill in how to use instructions, the background/references NOTE: DONE 
-# add to example menu (so there are a lot more example options) NOTE: DONE
-# polish/standardize file structure NOTE: DONE, this is okay for now I think. 
-# update Readme.MD to be nice and insight-driven (showing instructions, test examples, etc)
-
 
 
 

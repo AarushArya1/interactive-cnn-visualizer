@@ -4,7 +4,7 @@
 
 Want to learn how to use the application? See Instructions instead by clicking "How to Use".
 
-This page simply provides a brief overview of the concepts in this project and how they were used. Please see References at the bottom of this page to learn more.
+This page provides a brief overview of the concepts in this project and how they were used. Please see References at the bottom of this page to go further.
 
 ## Core Concepts & Grad-CAM
 Convolutional Neural Networks (CNNs): CNNs are the baseline machine learning algorithms used to classify images. They consist of convolutional layers, where kernels (filters) highlights specific features in the image such as edges, curves, or colors and create feature maps. Activation functions are used to help the network focus only on notable positive features, and afterwards feature maps are downsampled to help with processing. After multiple stacks of these layers, a final classification layer assigns probabilities to what the image is.   

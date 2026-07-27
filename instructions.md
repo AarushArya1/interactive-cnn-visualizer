@@ -4,11 +4,11 @@
 
 ## Overview
 
-This applications is a visual exploration of image classification model interpretability and robustness. It allows users to explore how image classification models of different architectures make predictions, and more importantly, how their decision-making behavior changes under perturbations such as Gaussian noise, rotation, and occlusion.
+This application is a visual exploration of image classification model interpretability and robustness. It allows users to explore how image classification models of different architectures make predictions, and more importantly, how their decision-making behavior changes under perturbations such as Gaussian noise, rotation, and occlusion.
 
 ## Getting Started
 
-1. Choose a model architecture for your trial
+1. Choose a model architecture for your trial (ResNet-50, VGG-16, or EfficientNetB0). See background.
 2. Choose an image. Either upload your own image or select an example image.
     - The best images for visualization have good lighting, high resolution, and have a clearly visible object with minimal background clutter.
     - However, it is recommended to test a wide range of images.
