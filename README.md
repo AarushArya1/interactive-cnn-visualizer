@@ -3,7 +3,7 @@
 
 An interactive Streamlit application for exploring CNN interpretability and robustness using Grad-CAM visualizations and image perturbations.
 
-Live at: **[your-app-url.streamlit.app](https://your-app-url.streamlit.app)**
+Live at: **[https://interactive-cnn-visualizer.streamlit.app](https://interactive-cnn-visualizer.streamlit.app)**
 
 ## Project Overview
 
@@ -26,9 +26,59 @@ Therefore, due to its accessibility, the project is aimed at anyone curious abou
 - Side-by-side list of original and perturbed predictions, with per-rank confidence drops displayed to indicate model sensitivity
 - View "How to Use" instructions and a detailed "Background, References, and Tools Used" section in the app 
 
-## DEMO/ EXAMPLE TEST: INSERT LATER
+## Demo
 
-This is a 
+This is a short demo to showcase the functionality of this application. We will start this demo with basic tests of a basic image on two basic model architectures, before testing different image perturbations and consequently discovering some interesting model attention patterns. 
+
+Let's begin with a simple image of a golden retriever, and let's use the ResNet-50 CNN to begin (see the Supported Architectures section). We run the first trial with no added perturbations and obtain the following Grad-CAM heatmap, with the top 5 predictions of the model displayed below (for this demo, we will display the top 5 predictions, although this can be changed in-app if desired.) 
+
+Remember, warmer regions of the heatmap are more influential for the decision.
+
+<img src="demo/demo_1_resnet_nopert.jpg" width="600"/>
+
+ResNet-50 correctly identifies the golden retriever, with 82% confidence. The Grad-CAM heatmap shows that the model's attention concentrated on the dog's head and face, indicating that these regions were the most influential for this prediction. 
+
+----
+Before we add complexity, we now test run the same trial but using the VGG-16 architecture:
+
+<img src="demo/demo_2_vgg_nopert.jpg" width="600"/>
+
+VGG-16 also correctly predicts golden retriever (79% confidence). However, the main attention pattern shown by the Grad-CAM heatmap is completely different. The heatmap for VGG-16 shifts away from the dog's face and instead onto texture-based features such as the dog's back and coat.
+
+----
+Now, let's switch back to the ResNet-50 CNN. We now apply Gaussian Noise of a chosen strength 65 (out of 100) to the image, distorting each pixel. 
+
+For the rest of the trials, the results above show a 2x2 grid. The top row consists of the original image (left) and perturbed image (right). The bottom row is what to focus on, as it consists of the original, no-perturbation Grad-CAM heatmap (left) next to the Grad-CAM heatmap after adding perturbations (right). Below, two prediction lists are shown (the original predictions on the left and the perturbed predictions on the right), including a confidence change column indicating the change in the model's confidence for each original prediction.
+
+<img src="demo/demo_3_heatmaps_resnet_noise60.jpg" width="500"/>
+
+<br/>
+
+<img src="demo/demo3_predictions.jpg" width="800"/>
+
+With significant noise applied, the model's confidence for the golden retriever prediction drops by a substantial 45%. The heatmap becomes more scattered, as the model relies less on solely the face and more on the entire dog's body. While the model still attends to the dog, it does so with less certainty and less focus on a specific region. After applying the perturbation, the model misclassifies the golden retriever as an otterhound. 
+
+----
+It is evident that the dog's face is perhaps the most influential region of the image for the model's prediction. Instead of using Gaussian Noise, let's instead occlude a 60 px region of the image containing most of the dog's face and see how our model adapts.
+
+<img src="demo/demo_4_heatmap_resnet_occlusion.jpg" width="500"/>
+
+<br/>
+
+<img src="demo/demo4_predictions.jpg" width="800"/>
+
+Blocking the face causes a significant confidence drop by almost 40%, confirming that the face region was driving the prediction. With the face occluded, we see the heatmap shift to the rest of the dog's body, especially the dog's fur. The model was able to adapt to the point where it retained its correct prediction of the golden retriever over other similar dog breeds. 
+
+----
+What if we instead choose a different image, where occluding a central feature of that image could make a more significant difference? Let's try using an image of a mushroom instead, and let's apply a large 130 px occlusion centered on the main cap of the mushroom.
+
+<img src="demo/demo_5_heatmap_mushroom_resnet_occlusion.jpg" width="500"/>
+
+<br/>
+
+<img src="demo/demo5_predictions.jpg" width="800"/>
+
+We may expect occluding the center of the mushroom to significantly decrease model confidence. However, model confidence counterintuitively increases from 45% to 75%! This reveals that stem features (which we occluded) may have been originally competing with other features of the mushroom, instead of supporting the prediction (an example of feature interference). The differences in the pre-occlusion and post-occlusion Grad-CAM heatmaps reveal that occluding these features allowed the model to focus more cleanly on the mushroom's orange cap without the full unoccluded image introducing noise into the decision.
 
 ## Supported Architectures 
 
@@ -58,7 +108,7 @@ Perturbations can be applied individually or stacked in any combination.
 
 ## Using the App
 
-The app is live at: **[your-app-url.streamlit.app](https://your-app-url.streamlit.app)**.
+The app is live at: **[https://interactive-cnn-visualizer.streamlit.app](https://interactive-cnn-visualizer.streamlit.app)**
 Simply open the link in your browser.
 
 If you would like to run the app locally:
